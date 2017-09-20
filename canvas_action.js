@@ -332,6 +332,31 @@ class Pensil {
     }
 }
 
+class Circle extends Form{
+
+    constructor(pos1x, pos1y, pos2x, pos2y){
+        super( pos1x, pos1y, pos2x, pos2y );
+    }
+
+    drawBottom() {
+        var a = this.pos2x-this.pos1x;
+        var b = this.pos2y-this.pos1y;
+        bottom_ctx.beginPath();
+        bottom_ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
+        bottom_ctx.stroke();
+        bottom_ctx.closePath();
+    }
+
+    drawTop() {
+        var a = this.pos2x-this.pos1x;
+        var b = this.pos2y-this.pos1y;
+        ctx.beginPath();
+        ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
+        ctx.stroke();
+        ctx.closePath();
+    }
+}
+
 class Triangle extends Form {
 
     constructor(pos1x, pos1y, pos2x, pos2y){
@@ -544,6 +569,7 @@ objNameSpace.Square = Square;
 objNameSpace.BaseLine = BaseLine;  
 objNameSpace.Triangle = Triangle;    
 objNameSpace.BaseRectangle = BaseRectangle;            
+objNameSpace.Circle = Circle;
 
 
 var pos;
@@ -933,6 +959,10 @@ function clickOnCrop(){
 
 function clickOnTriangle(){
   curStyle = "BaseLine";
+}
+
+function clickOnCircle(){
+  curStyle = "Circle";
 }
 
 
