@@ -169,8 +169,8 @@ class BaseRectangle extends Form {
     }
 
         drawTop() {
-            ctx.strokeStyle = this.color;
-            ctx.globalAlpha = this.visibility;
+            ctx.strokeStyle = "blue";
+            ctx.globalAlpha = 0.9;
             ctx.strokeRect(this.pos1x,this.pos1y,this.pos2x - this.pos1x,this.pos2y - this.pos1y);
         }
 
@@ -341,7 +341,9 @@ class Circle extends Form{
     drawBottom() {
         var a = this.pos2x-this.pos1x;
         var b = this.pos2y-this.pos1y;
+	bottom_ctx.strokeStyle = this.color;
         bottom_ctx.beginPath();
+	bottom_ctx.globalAlpha = this.visibility;
         bottom_ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
         bottom_ctx.stroke();
         bottom_ctx.closePath();
@@ -350,7 +352,9 @@ class Circle extends Form{
     drawTop() {
         var a = this.pos2x-this.pos1x;
         var b = this.pos2y-this.pos1y;
+	ctx.strokeStyle = this.color;
         ctx.beginPath();
+	ctx.globalAlpha = this.visibility;
         ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
         ctx.stroke();
         ctx.closePath();
@@ -387,6 +391,53 @@ class Triangle extends Form {
 	bottom_ctx.lineTo( this.pos1x, this.pos1y );
         bottom_ctx.stroke();
         bottom_ctx.closePath();
+    }
+}
+
+class Crop extends Form {
+    constructor(pos1x, pos1y, pos2x, pos2y){
+	super( pos1x, pos1y, pos2x, pos2y );
+	this.a = Math.floor(pos2x - pos1x);
+	this.b = Math.floor(pos2y - pos1y);
+	this.picture = [];
+	this.n = Math.abs(this.a*this.b*4);
+	this.x0 = Math.floor(Math.min(pos1x,pos2x));
+	this.y0 = Math.floor(Math.min(pos1y,pos2y));
+	this.picture.length = this.n;
+	
+	var ImD = bottom_ctx.getImageData(this.x0,this.y0,Math.abs(this.a),Math.abs(this.b));
+	for(var i=0; i<this.n; i++){
+	    this.picture[i]=ImD.data[i];
+	    ImD.data[i] = 255;
+	}
+	bottom_ctx.putImageData(ImD,this.x0,this.y0);
+         
+    }
+    
+    drawTop() {
+	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
+	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
+	var ImD = ctx.getImageData(x1,y1,Math.abs(this.a),Math.abs(this.b));
+
+	ctx.strokeStyle = "#1287d7";
+        ctx.globalAlpha = 0.7;
+        ctx.strokeRect(this.pos2x,this.pos2y,-this.a,-this.b);
+	for(var i=0; i<this.n; i++) ImD.data[i] = this.picture[i];
+	ctx.putImageData(ImD,x1,y1);
+    }
+	
+    drawBottom() {
+	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
+	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
+	var oldImD = bottom_ctx.getImageData(this.x0,this.y0,Math.abs(this.a),Math.abs(this.b));
+	var ImD = bottom_ctx.getImageData(x1,y1,Math.abs(this.a),Math.abs(this.b));
+	for(var i=0; i<this.n; i++){
+            ImD.data[i] = this.picture[i];
+	    oldImD.data[i] = 255;
+	}
+	bottom_ctx.putImageData(oldImD,this.x0,this.y0);
+	bottom_ctx.putImageData(ImD,x1,y1);
+	
     }
 }
 
@@ -570,6 +621,7 @@ objNameSpace.BaseLine = BaseLine;
 objNameSpace.Triangle = Triangle;    
 objNameSpace.BaseRectangle = BaseRectangle;            
 objNameSpace.Circle = Circle;
+objNameSpace.Crop = Crop;
 
 
 var pos;
@@ -682,11 +734,10 @@ c.onmouseleave = function( event ) {
 c.onmouseenter = function( event ) { window.getSelection().removeAllRanges(); };
 /// Когда появятся другие элементы(круг и тд) должно быть изменено
 function startDrawing( event ) {
-	test++;
 	if ( im_is ) {
 		img_place();
 	} else {
-    	if(curStyle != "Triangle") curObject = new objNameSpace[ curStyle ]( pos.x, pos.y, pos.x, pos.y );
+    	if(curStyle != "Triangle" && curStyle != "Crop") curObject = new objNameSpace[ curStyle ]( pos.x, pos.y, pos.x, pos.y );
     curDrawing = setInterval( changeAndDraw, 1 );
 	}
 }
@@ -710,8 +761,15 @@ function endDrawing( event ) {
             var p = new Triangle(curObject.pos1x,curObject.pos1y,curObject.pos2x,curObject.pos2y);
             curObject = p;
         }
+        else if(curStyle == "BaseRectangle"){
+            ctx.clearRect( 0, 0, c.width, c.height );
+            curStyle = "Crop";
+            var p = new Crop(curObject.pos1x,curObject.pos1y,curObject.pos2x,curObject.pos2y);
+            curObject = p;
+        }
         else{
             if(curStyle == "Triangle") curStyle = "BaseLine";
+	    if(curStyle == "Crop") curStyle = "BaseRectangle";
             curObject.drawBottom();
        	    ctx.clearRect( 0, 0, c.width, c.height );
        	    curPos = curPos > 0 ? curPos : 0;
@@ -872,6 +930,7 @@ function reSize() {
 }
 
 function settings() {
+    clearCanvas();
     if (localStorage.length != 0) {
         document.getElementById('color').value = localStorage.getItem('savedColor');
         Color = localStorage.getItem('savedColor');
