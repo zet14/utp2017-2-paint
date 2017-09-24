@@ -404,8 +404,10 @@ class Crop extends Form {
 	this.x0 = Math.floor(Math.min(pos1x,pos2x));
 	this.y0 = Math.floor(Math.min(pos1y,pos2y));
 	this.picture.length = this.n;
+	this.absA = Math.abs(this.a);
+	this.absB = Math.abs(this.b);
 	
-	var ImD = bottom_ctx.getImageData(this.x0,this.y0,Math.abs(this.a),Math.abs(this.b));
+	var ImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
 	for(var i=0; i<this.n; i++){
 	    this.picture[i]=ImD.data[i];
 	    ImD.data[i] = 255;
@@ -417,11 +419,8 @@ class Crop extends Form {
     drawTop() {
 	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
 	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
-	var ImD = ctx.getImageData(x1,y1,Math.abs(this.a),Math.abs(this.b));
+	var ImD = ctx.getImageData(x1,y1,this.absA,this.absB);
 
-	ctx.strokeStyle = "#1287d7";
-        ctx.globalAlpha = 0.7;
-        ctx.strokeRect(this.pos2x,this.pos2y,-this.a,-this.b);
 	for(var i=0; i<this.n; i++) ImD.data[i] = this.picture[i];
 	ctx.putImageData(ImD,x1,y1);
     }
@@ -429,8 +428,8 @@ class Crop extends Form {
     drawBottom() {
 	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
 	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
-	var oldImD = bottom_ctx.getImageData(this.x0,this.y0,Math.abs(this.a),Math.abs(this.b));
-	var ImD = bottom_ctx.getImageData(x1,y1,Math.abs(this.a),Math.abs(this.b));
+	var oldImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
+	var ImD = bottom_ctx.getImageData(x1,y1,this.absA,this.absB);
 	for(var i=0; i<this.n; i++){
             ImD.data[i] = this.picture[i];
 	    oldImD.data[i] = 255;
