@@ -12,15 +12,15 @@ function handleKeyDown( evt ) {
         redo();
     }
 
-    if ( evt.keyCode === 76 ) {
+    if ( evt.keyCode === 76 && evt.ctrlKey ) {
         curStyle = "Line";
     }
 
-    if ( evt.keyCode === 80 ) {
+    if ( evt.keyCode === 80 && evt.ctrlKey ) {
         curStyle = "Pensil";
     }
 
-    if ( evt.keyCode === 67) {
+    if ( evt.keyCode === 67 && evt.ctrlKey ) {
         document.getElementById('color').click();
     }
 };

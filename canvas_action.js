@@ -87,6 +87,7 @@ document.getElementById('visible-text').oninput = function () {
  */
 function clearCanvas () {
     
+    document.getElementById('form').style.visibility = "hidden";
     var objectClear = new Clear();
     objectClear.drawBottom();
     objects.push(objectClear);
@@ -170,7 +171,7 @@ class BaseRectangle extends Form {
 
         drawTop() {
             ctx.strokeStyle = "blue";
-            ctx.globalAlpha = 0.9;
+            ctx.globalAlpha = 0.7;
             ctx.strokeRect(this.pos1x,this.pos1y,this.pos2x - this.pos1x,this.pos2y - this.pos1y);
         }
 
@@ -341,9 +342,7 @@ class Circle extends Form{
     drawBottom() {
         var a = this.pos2x-this.pos1x;
         var b = this.pos2y-this.pos1y;
-	bottom_ctx.strokeStyle = this.color;
         bottom_ctx.beginPath();
-	bottom_ctx.globalAlpha = this.visibility;
         bottom_ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
         bottom_ctx.stroke();
         bottom_ctx.closePath();
@@ -352,9 +351,7 @@ class Circle extends Form{
     drawTop() {
         var a = this.pos2x-this.pos1x;
         var b = this.pos2y-this.pos1y;
-	ctx.strokeStyle = this.color;
         ctx.beginPath();
-	ctx.globalAlpha = this.visibility;
         ctx.arc(this.pos1x,this.pos1y,Math.sqrt(a*a+b*b),0,2*Math.PI);
         ctx.stroke();
         ctx.closePath();
@@ -391,52 +388,6 @@ class Triangle extends Form {
 	bottom_ctx.lineTo( this.pos1x, this.pos1y );
         bottom_ctx.stroke();
         bottom_ctx.closePath();
-    }
-}
-
-class Crop extends Form {
-    constructor(pos1x, pos1y, pos2x, pos2y){
-	super( pos1x, pos1y, pos2x, pos2y );
-	this.a = Math.floor(pos2x - pos1x);
-	this.b = Math.floor(pos2y - pos1y);
-	this.picture = [];
-	this.n = Math.abs(this.a*this.b*4);
-	this.x0 = Math.floor(Math.min(pos1x,pos2x));
-	this.y0 = Math.floor(Math.min(pos1y,pos2y));
-	this.picture.length = this.n;
-	this.absA = Math.abs(this.a);
-	this.absB = Math.abs(this.b);
-	
-	var ImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
-	for(var i=0; i<this.n; i++){
-	    this.picture[i]=ImD.data[i];
-	    ImD.data[i] = 255;
-	}
-	bottom_ctx.putImageData(ImD,this.x0,this.y0);
-         
-    }
-    
-    drawTop() {
-	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
-	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
-	var ImD = ctx.getImageData(x1,y1,this.absA,this.absB);
-
-	for(var i=0; i<this.n; i++) ImD.data[i] = this.picture[i];
-	ctx.putImageData(ImD,x1,y1);
-    }
-	
-    drawBottom() {
-	var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
-	var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
-	var oldImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
-	var ImD = bottom_ctx.getImageData(x1,y1,this.absA,this.absB);
-	for(var i=0; i<this.n; i++){
-            ImD.data[i] = this.picture[i];
-	    oldImD.data[i] = 255;
-	}
-	bottom_ctx.putImageData(oldImD,this.x0,this.y0);
-	bottom_ctx.putImageData(ImD,x1,y1);
-	
     }
 }
 
@@ -588,16 +539,97 @@ class Eraser extends Pensil {
     }
 }
 
-    class Clear{
+class Clear{
 
-        drawBottom(){
-            var max = bottomCanvas.width*bottomCanvas.height*4;
-            var imageDate = bottom_ctx.getImageData(0,0,bottomCanvas.width,bottomCanvas.height);
-            for(var j = 0;j<max;j++) imageDate.data[j] = 255;
-            bottom_ctx.putImageData(imageDate,0,0);
-        }
-
+    drawBottom(){
+        var max = bottomCanvas.width*bottomCanvas.height*4;
+        var imageDate = bottom_ctx.getImageData(0,0,bottomCanvas.width,bottomCanvas.height);
+        for(var j = 0;j<max;j++) imageDate.data[j] = 255;
+        bottom_ctx.putImageData(imageDate,0,0);
     }
+
+}
+
+class Text extends Form{
+
+  constructor( pos1x, pos1y, pos2x, pos2y) {
+      super( pos1x, pos1y, pos2x, pos2y);
+      this.size = textSize;
+      this.style = textStyle;
+      this.message = textMessage;
+    }
+
+    drawTop(){
+      ctx.fillStyle = this.color;
+      ctx.font = (this.size + "px " + this.style);
+      trueFillText(this.message,Number(this.size)+5,this.pos2x,this.pos2y,ctx);
+      //ctx.fillText(this.message, this.pos2x, this.pos2y);
+    }
+
+    drawBottom(){
+      bottom_ctx.fillStyle = this.color;
+      bottom_ctx.font = (this.size + "px " + this.style);
+      trueFillText(this.message,Number(this.size)+5,this.pos2x,this.pos2y,bottom_ctx);
+      //bottom_ctx.fillText(this.message, this.pos2x, this.pos2y);
+    }
+}
+
+function trueFillText(message,size,x,y,context){
+	var i;
+	while(message.length>30){
+		i = message.lastIndexOf(" ",30);
+		//alert(message.substring(0,i)+" "+x+" "+y);
+		context.fillText(message.substring(0,i),x,y);
+		y = String(Number(y)+size);
+		message = message.substring(i+1);
+	}
+	context.fillText(message,x,y);
+}
+
+class Crop extends Form {
+
+    constructor(pos1x, pos1y, pos2x, pos2y){
+        super( pos1x, pos1y, pos2x, pos2y );
+        this.a = Math.floor(pos2x - pos1x);
+        this.b = Math.floor(pos2y - pos1y);
+        this.picture = [];
+        this.n = Math.abs(this.a*this.b*4);
+        this.x0 = Math.floor(Math.min(pos1x,pos2x));
+        this.y0 = Math.floor(Math.min(pos1y,pos2y));
+        this.picture.length = this.n;
+        this.absA = Math.abs(this.a);
+        this.absB = Math.abs(this.b);
+  
+        var ImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
+        for(var i=0; i<this.n; i++){
+            this.picture[i]=ImD.data[i];
+            ImD.data[i] = 255;
+        }
+        bottom_ctx.putImageData(ImD,this.x0,this.y0);     
+    }
+    
+    drawTop() {
+        var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
+        var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
+        var ImD = ctx.getImageData(x1,y1,this.absA,this.absB);
+
+        for(var i=0; i<this.n; i++) ImD.data[i] = this.picture[i];
+        ctx.putImageData(ImD,x1,y1);
+    }
+  
+    drawBottom() {
+        var x1 = Math.floor(Math.min(this.pos2x-this.a,this.pos2x));
+        var y1 = Math.floor(Math.min(this.pos2y-this.b,this.pos2y));
+        var oldImD = bottom_ctx.getImageData(this.x0,this.y0,this.absA,this.absB);
+        var ImD = bottom_ctx.getImageData(x1,y1,this.absA,this.absB);
+        for(var i=0; i<this.n; i++){
+            ImD.data[i] = this.picture[i];
+            oldImD.data[i] = 255;
+        }
+        bottom_ctx.putImageData(oldImD,this.x0,this.y0);
+        bottom_ctx.putImageData(ImD,x1,y1);
+    }
+}
 
 
 function getRandomFloat(min, max) {
@@ -621,6 +653,7 @@ objNameSpace.Triangle = Triangle;
 objNameSpace.BaseRectangle = BaseRectangle;            
 objNameSpace.Circle = Circle;
 objNameSpace.Crop = Crop;
+objNameSpace.Text = Text;
 
 
 var pos;
@@ -700,8 +733,6 @@ var curPos = 0;
 var curStyle = "None";
 var curStyles = []; 
 
-var test = 0;
-
 /// Изначально было задуманно для передачи данных межу файлами, но вроде
 /// и без этого работает
 try {
@@ -768,7 +799,7 @@ function endDrawing( event ) {
         }
         else{
             if(curStyle == "Triangle") curStyle = "BaseLine";
-	    if(curStyle == "Crop") curStyle = "BaseRectangle";
+            if(curStyle == "Crop") curStyle = "BaseRectangle";
             curObject.drawBottom();
        	    ctx.clearRect( 0, 0, c.width, c.height );
        	    curPos = curPos > 0 ? curPos : 0;
@@ -929,7 +960,6 @@ function reSize() {
 }
 
 function settings() {
-    clearCanvas();
     if (localStorage.length != 0) {
         document.getElementById('color').value = localStorage.getItem('savedColor');
         Color = localStorage.getItem('savedColor');
@@ -1023,5 +1053,21 @@ function clickOnCircle(){
   curStyle = "Circle";
 }
 
+function clickOnText(){
+  document.getElementById('form').style.visibility = "visible";
+}
 
+var textSize;
+var textStyle;
+var textMessage;
+
+function clickOnEnd(){
+  curStyle = "Text";
+  textMessage = area.value;
+  textSize = fontText.value;
+  area.value = "";
+  var i = document.getElementById("select").options.selectedIndex;
+  textStyle = document.getElementById("select").options[i].value;
+  document.getElementById('form').style.visibility = "hidden";
+}
 
