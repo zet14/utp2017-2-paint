@@ -575,15 +575,34 @@ class Text extends Form{
 }
 
 function trueFillText(message,size,x,y,context){
-	var i;
-	while(message.length>30){
-		i = message.lastIndexOf(" ",30);
-		//alert(message.substring(0,i)+" "+x+" "+y);
-		context.fillText(message.substring(0,i),x,y);
-		y = String(Number(y)+size);
-		message = message.substring(i+1);
+	var i = 0;
+	var t;
+	var j = 0;
+	var c1;
+	while(i<message.length){
+		if(message.charAt(i) == "\n"){
+			c1 = message.substring(j,i);
+			while(c1.length>30){
+				t = c1.lastIndexOf(" ",30);
+				context.fillText(c1.substring(0,i),x,y);
+				y += size;
+				c1 = c1.substring(t+1);
+			}
+			context.fillText(c1,x,y);
+			y += size;
+			j=i+1;
+		}
+
+		i++;
 	}
-	context.fillText(message,x,y);
+	c1 = message.substring(j);
+	while(c1.length>30){
+		t = c1.lastIndexOf(" ",30);
+		context.fillText(c1.substring(0,t),x,y);
+		y += size;
+		c1 = c1.substring(t+1);
+	}
+	context.fillText(c1,x,y);
 }
 
 class Crop extends Form {
